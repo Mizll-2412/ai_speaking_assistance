@@ -1,0 +1,7 @@
+Flask
+SpeechRecognition
+pyttsx3
+openai-whisper
+pyaudio
+torch
+torchaudio
