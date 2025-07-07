@@ -100,7 +100,7 @@ class PreprocessingData:
                 }
                 word_features.append(features)
         return pd.DataFrame(word_features)
-    def extract_phoneme_features(selt, data):
+    def extract_phoneme_features(self, data):
         phoneme_features=[]
         for item in data:
             speaker_id = item['speaker']
@@ -130,7 +130,90 @@ class PreprocessingData:
             return 'consonant'
         else:
             return 'unknown'
+    def extrac_audio_features(self, audio_data, sr=16000):
+        features = []
+        features["duration"] = len(audio_data)/sr
+        features["rms_energy"] = np.sqrt(np.mean(audio_data**2))
+        features["zero_crossing_rate"] = np.mean(librosa.feature.zero_crossing_rate(audio_data))
 
+        mfccs = librosa.feature.mfcc(y=audio_data, sr=sr, n_mfcc=13)
+        features["mfcc_mean"] = np.mean(mfccs, axis=1)
+        features["mfcc_std"] = np.std(mfccs, axis=1)
+
+        spectral_centroids = librosa.feature.spectral_centroid(y=audio_data, sr=sr)
+        features["spectral_centroid_mean"] = np.mean(spectral_centroids)
+        features["spectral_centroid_std"] = np.std(spectral_centroids)
+
+        spectral_rolloff = librosa.feature.spectral_rolloff(y=audio_data, sr=sr)
+        features['spectral_rolloff_mean'] = np.mean(spectral_rolloff)
+        features['spectral_rolloff_std'] = np.std(spectral_rolloff)
+
+        chroma = librosa.feature.chroma_stft(y=audio_data, sr=sr)
+        features["chroma_mean"] = np.mean(chroma, axis=1)
+        features["chroma_std"] = np.std(chroma, axis=1)
+
+        return features
+    def normalize_scores(self, df, score_columns):
+        df_normalize = df.copy()
+
+        for col in df_normalize:
+            if col in df.columns:
+                df_normalize[f'{col}_normalized'] = df[col]/10.0
+
+        return df_normalize
+    def encode_categorical_features(self, df):
+        df_encoded = df.copy()
+        categorical_columns = ['gender', 'phone_type']
+
+        for col in categorical_columns:
+            if col in df.columns:
+                df_encoded[f'{col}_encoded'] = self.label_enconder.fit_transform(df[col])
+        return df_encoded
+    
+    def create_quality_labels(self, df):
+        df_labeled = df.copy()
+        
+        def classify_quality(score):
+            if score >= 8:
+                return 'excellent'
+            elif score >= 6:
+                return 'good'
+            elif score >=4:
+                return 'fair'
+            else:
+                return 'poor'
+        if 'total_score' in df.columns:
+            df_labeled['quality_label'] = df['total_score'].apply(classify_quality)
+        return df_labeled
+    
+    def detect_outliers(self, df, columns):
+        outliers = {}
+        for col in columns:
+            if col in df.columns:
+                Q1 = df[col].quantile(0.25)
+                Q3 = df[col].quantile(0.75)
+                IQR = Q3 - Q1
+
+                lower_bound = Q1 - 1.5*IQR
+                upper_bound = Q3 + 1.5*IQR
+                outliers[col] = df[(df[col]<lower_bound)|(df[col] > upper_bound)].index.tolist()
+        return outliers
+    
+    def create_age_group(self, df):
+        df_grouped = df.copy()
+        def classify_age(age):
+            if age<=8:
+                return 'young_child'
+            elif age <= 12:
+                return 'child'
+            elif age <= 17:
+                return 'teenager'
+            else:
+                return 'adult'
+        if 'age' in df.columns:
+             df_grouped['age_group'] = df['age'].apply(classify_age)
+        return df_grouped
+    
 #2 Dataset and dataloader
 class AudioScoringDataset(Dataset):
     def __init__(self, X, y):
