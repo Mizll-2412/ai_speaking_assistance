@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakAI - English Speaking Practice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .practice-area {
+            background: #f8f9ff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e7ff;
+        }
+
+        .topic-selector {
+            margin-bottom: 25px;
+        }
+
+        .topic-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .topic-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .topic-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .conversation-area {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin-right: auto;
+        }
+
+        .user-message {
+            background: #e0e7ff;
+            color: #374151;
+            margin-left: auto;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .record-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .record-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .record-btn.recording {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse 2s infinite;
+        }
+
+        .stop-btn,
+        .play-btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stop-btn:hover,
+        .play-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .feedback {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+
+        .feedback h4 {
+            color: #0369a1;
+            margin-bottom: 8px;
+        }
+
+        .feedback p {
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+        }
+
+        .recording-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🎤 SpeakAI</div>
+            <div class="subtitle">Practice English Speaking with AI Assistant</div>
+        </div>
+
+        <div class="practice-area">
+            <div class="topic-selector">
+                <label for="topic">Choose a conversation topic:</label>
+                <select id="topic" class="topic-select">
+                    <option value="introduction">Self Introduction</option>
+                    <option value="daily">Daily Activities</option>
+                    <option value="work">Work & Career</option>
+                    <option value="hobbies">Hobbies & Interests</option>
+                    <option value="travel">Travel & Culture</option>
+                    <option value="food">Food & Cooking</option>
+                    <option value="technology">Technology</option>
+                    <option value="environment">Environment</option>
+                </select>
+            </div>
+
+            <div class="conversation-area" id="conversation">
+                <div class="message ai-message">
+                    <strong>AI Assistant:</strong> Hello! I'm here to help you practice English speaking. Please choose
+                    a topic above and click the microphone button to start our conversation. Don't worry about making
+                    mistakes - that's how we learn! 😊
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="record-btn" id="conversationPlay">Start Conversation</button>
+                <button class="record-btn" id="recordBtn" style="display: none;">
+                    <span>🎤</span>
+                    <span id="recordText">Start Speaking</span>
+                </button>
+                <button class="stop-btn" id="stopBtn" style="display: none;">Stop</button>
+                <button class="play-btn" id="playBtn" style="display: none;">Play Back</button>
+            </div>
+
+            <div class="recording-indicator" id="recordingIndicator">
+                <div class="recording-dot"></div>
+                <span>Recording...</span>
+            </div>
+            <div id="errorMessage" class="message" style="display: none; color: red;"></div>
+            <div id="successMessage" class="message" style="display: none; color: green;"></div>
+
+
+            <div class="feedback" id="feedback">
+                <h4>💡 AI Feedback</h4>
+                <p id="feedbackText"></p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="sessionsCount">0</div>
+                <div class="stat-label">Practice Sessions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="wordsSpoken">0</div>
+                <div class="stat-label">Words Spoken</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="accuracy">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="streak">0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SpeakingPractice {
+            constructor() {
+                this.isRecording = false;
+                this.initializeElements();
+                this.setupEventListeners();
+                this.checkStatus();
+                this.isPlaying = false;
+                this.currentAudio = null;
+
+                // Kiểm tra trạng thái định kỳ
+                setInterval(() => this.checkStatus(), 2000);
+            }
+
+            initializeElements() {
+                this.conversationPlay = document.getElementById('conversationPlay');
+                this.recordBtn = document.getElementById('recordBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.conversation = document.getElementById('conversation');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                this.recordingIndicator = document.getElementById('recordingIndicator');
+                this.topicSelect = document.getElementById('topic');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.successMessage = document.getElementById('successMessage');
+                this.recentTranscriptions = document.getElementById('recentTranscriptions');
+                this.transcriptionsList = document.getElementById('transcriptionsList');
+            }
+
+            setupEventListeners() {
+                this.conversationPlay.addEventListener('click', () => this.startConversation());
+                this.recordBtn.addEventListener('click', () => this.startRecording());
+                this.stopBtn.addEventListener('click', () => this.stopRecording());
+                this.topicSelect.addEventListener('change', () => this.changeTopic());
+            }
+            async checkStatus() {
+                try {
+                    const response = await fetch('/get_status');
+                    const data = await response.json();
+
+                    if (data.is_recording !== this.isRecording) {
+                        this.isRecording = data.is_recording;
+                        this.updateUI();
+                    }
+                } catch (error) {
+                    console.error('Error checking status:', error);
+                }
+            }
+            async startConversation() {
+                this.recordBtn.style.display="block"
+                this.conversationPlay.style.display = "none"
+                if (this.isPlaying) {
+                    console.log('Audio is already playing, ignoring click');
+                    return;
+                }
+                this.conversationPlay.disabled = true;
+                this.isPlaying = true;
+
+                try {
+                    if (this.currentAudio) {
+                        this.currentAudio.pause();
+                        this.currentAudio = null;
+                    }
+                    const aiResponse = this.getWelcomeMessage();
+                    this.showMessage('Đang tạo phản hồi...', 'info');
+                    const response = await fetch("/text_to_speech", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ text: aiResponse })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        // Clear conversation và thêm AI message
+                        this.clearConversation();
+                        this.addAIMessage(aiResponse);
+                        this.showMessage('Phản hồi AI đã được tạo', 'success');
+                        if (data.audio_url) {
+                            // Đợi một chút để đảm bảo file đã được tạo
+                            setTimeout(() => {
+                                this.currentAudio = new Audio(data.audio_url);
+                                this.currentAudio.volume = 0.8;
+
+                                this.currentAudio.onended = () => {
+                                    this.isPlaying = false;
+                                    this.conversationPlay.disabled = false;
+                                    this.currentAudio = null;
+                                };
+
+                                // Xử lý lỗi
+                                this.currentAudio.onerror = (e) => {
+                                    console.log('Audio error:', e);
+                                    this.isPlaying = false;
+                                    this.conversationPlay.disabled = false;
+                                    this.currentAudio = null;
+                                    this.showMessage('Không thể phát âm thanh', 'error');
+                                };
+
+                                this.currentAudio.play().catch(e => {
+                                    console.log('Browser audio play failed:', e);
+                                    this.isPlaying = false;
+                                    this.conversationPlay.disabled = false;
+                                    this.currentAudio = null;
+                                    this.showMessage('Không thể phát âm thanh từ browser', 'error');
+                                });
+                            }, 800);
+                        } else {
+                            this.isPlaying = false;
+                            this.conversationPlay.disabled = false;
+                        }
+                    } else {
+                        this.showMessage(`Lỗi: ${data.error || 'Failed to start conversation'}`, 'error');
+                        this.isPlaying = false;
+                        this.conversationPlay.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error starting conversation:', error);
+                    this.showMessage('Lỗi kết nối đến server', 'error');
+                    this.isPlaying = false;
+                    this.conversationPlay.disabled = false;
+                }
+            }
+            async startRecording() {
+                this.stopBtn.style.display = 'block'
+                try {
+                    this.showMessage('start recording...', 'info')
+                    const response = await fetch('/start_recording', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.status == 'success') {
+                        this.isRecording = true;
+                        this.updateUI();
+                        this.showMessage('recording started! Speak now...', 'success');
+                        this.addSystemMessage('Recording started - speak clearly into your microphone');
+                    } else {
+                        this.showMessage(data.message, 'error');
+                    }
+                }
+                catch (error) {
+                    console.error('Error starting recording:', error);
+                    this.showMessage('Failed to start recording. Please try again.', 'error');
+                }
+            }
+            async stopRecording() {
+                this.stopBtn.style.display = 'none'
+                try {
+                    const response = await fetch('/stop_recording', {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    if (result.status === "success") {
+                        this.addUserMessage(result.text);
+                    } else {
+                        alert("Error: " + result.message)
+                    }
+                } catch (error) {
+                    console.error("Stop Error:", error);
+                }
+            }
+            updateUI() {
+                if (this.isRecording) {
+                    this.recordBtn.disabled = true;
+                    this.stopBtn.classList.add('show');
+                    this.recordingIndicator.classList.add('active');
+                    this.updateStatusIndicator('Recording... Click stop when finished', 'status-recording');
+                } else {
+                    this.recordBtn.disabled = false;
+                    this.stopBtn.classList.remove('show');
+                    this.recordingIndicator.classList.remove('active');
+                    this.updateStatusIndicator('🟢 Ready to record - Click start to begin', 'status-ready');
+                }
+            }
+            updateStatusIndicator(text, className) {
+                if (this.statusIndicator) {
+                    this.statusIndicator.textContent = text;
+                    this.statusIndicator.className = `status-indicator ${className}`;
+                }
+            }
+            showMessage(message, type) {
+                const errorEl = this.errorMessage;
+                const successEl = this.successMessage;
+                errorEl.style.display = 'none';
+                successEl.style.display = 'none';
+                if (type == 'error') {
+                    errorEl.textContent = message;
+                    errorEl.style.display = 'block';
+                    setTimeout(() => errorEl.style.display = 'none', 5000);
+                } else if (type == 'success') {
+                    successEl.textContent = message;
+                    successEl.style.display = 'block';
+                    setTimeout(() => successEl.style.display = 'none', 5000);
+                }
+            }
+            addUserMessage(text) {
+                this.addMessage(`<strong>You:</strong> ${text}`, 'user-message');
+            }
+            addAIMessage(text) {
+                this.addMessage(`<strong>AI Assistant:</strong> ${text}`, 'ai-message');
+            }
+
+            addSystemMessage(text) {
+                this.addMessage(text, 'system-message');
+            }
+            addMessage(content, className) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${className}`;
+                messageDiv.innerHTML = content;
+
+                this.conversation.appendChild(messageDiv);
+                this.conversation.scrollTop = this.conversation.scrollHeight;
+            }
+
+            clearConversation() {
+                this.conversation.innerHTML = '';
+            }
+
+            addTranscription(text) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+
+                this.transcriptions.unshift({
+                    text: text,
+                    time: timeString
+                });
+
+                // Keep only last 5 transcriptions
+                if (this.transcriptions.length > 5) {
+                    this.transcriptions = this.transcriptions.slice(0, 5);
+                }
+
+                this.updateTranscriptionsList();
+            }
+            updateTranscriptionsList() {
+                if (this.transcriptions && this.transcriptions.length > 0) {
+                    if (this.recentTranscriptions) {
+                        this.recentTranscriptions.style.display = 'block';
+                    }
+                    if (this.transcriptionsList) {
+                        this.transcriptionsList.innerHTML = this.transcriptions.map(item => `
+                        <div class="transcription-item">
+                            <div class="transcription-time">${item.time}</div>
+                            <div class="transcription-text">${item.text}</div>
+                        </div>
+                        `).join('');
+                    }
+                }
+            }
+            generateAIResponse() {
+                const aiResponses = {
+                    introduction: [
+                        "Nice to meet you! Can you tell me more about your background?",
+                        "That's interesting! What do you enjoy doing in your free time?",
+                        "Great! How would you describe your personality to someone new?"
+                    ],
+                    daily: [
+                        "That sounds like a productive day! What's your morning routine like?",
+                        "Interesting! How do you usually spend your evenings?",
+                        "Do you prefer weekdays or weekends? Why?"
+                    ],
+                    work: [
+                        "That's a fascinating career! What motivated you to choose this field?",
+                        "What's the most challenging part of your job?",
+                        "Where do you see yourself professionally in 5 years?"
+                    ],
+                    hobbies: [
+                        "That's a wonderful hobby! How did you get started with it?",
+                        "How much time do you usually spend on your hobbies?",
+                        "Have you ever thought about turning your hobby into a career?"
+                    ],
+                    travel: [
+                        "That sounds amazing! What was the most memorable part of your trip?",
+                        "How do you usually plan your travels?",
+                        "What's the next destination on your travel wishlist?"
+                    ],
+                    food: [
+                        "That sounds delicious! Do you enjoy cooking at home?",
+                        "What's your favorite cuisine and why?",
+                        "Have you ever tried cooking food from other cultures?"
+                    ],
+                    technology: [
+                        "Technology is evolving so fast! How has it changed your daily life?",
+                        "What's your opinion on artificial intelligence?",
+                        "Which technological advancement excites you the most?"
+                    ],
+                    environment: [
+                        "That's an important topic! How do you contribute to environmental protection?",
+                        "What environmental issue concerns you the most?",
+                        "Do you think individuals or governments should lead environmental change?"
+                    ]
+                };
+
+                const topic = this.topicSelect.value;
+                const responses = aiResponses[topic];
+                const randomIndex = Math.floor(Math.random() * responses.length);
+                return responses[randomIndex];
+            }
+            getWelcomeMessage() {
+                const welcomeMessages = {
+                    introduction: "Great choice! Let's start with introductions. Please tell me about yourself.",
+                    daily: "Perfect! I'd love to hear about your daily routine. What does a typical day look like for you?",
+                    work: "Interesting topic! Can you tell me about your work or studies?",
+                    hobbies: "Fun topic! What are some hobbies or activities you enjoy doing?",
+                    travel: "Exciting! Do you enjoy traveling? Tell me about a memorable trip.",
+                    food: "Delicious topic! What kind of food do you like? Do you enjoy cooking?",
+                    technology: "Great choice! How do you feel about modern technology and its impact?",
+                    environment: "Important topic! What are your thoughts on environmental issues?"
+                };
+
+                const topic = this.topicSelect.value;
+                return welcomeMessages[topic];
+            }
+
+            changeTopic() {
+                this.clearConversation();
+                const welcomeMessage = this.getWelcomeMessage();
+                this.addAIMessage(welcomeMessage);
+                return welcomeMessage;
+            }
+        }
+
+        // Initialize the application
+        const app = new SpeakingPractice();
+    </script>
+</body>
+
+</html>
