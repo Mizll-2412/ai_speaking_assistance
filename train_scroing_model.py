@@ -68,7 +68,7 @@ def preprocess_data(df):
     print("Starting preprocess data")
     
     # Validate input data
-    required_columns = ['audio', 'accuracy', 'completeness', 'fluency', 'prosodic']
+    required_columns = ['audio', 'accuracy', 'fluency', 'prosodic']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
@@ -111,7 +111,7 @@ def preprocess_data(df):
     print(f"Successfully processed {valid_samples}/{len(df)} audio samples")
     
     X = np.array(features)
-    score_columns = ['accuracy', 'completeness', 'fluency', 'prosodic']
+    score_columns = ['accuracy', 'fluency', 'prosodic']
     y = df[score_columns].values.astype(np.float32)
     
     # Validate shapes
@@ -141,7 +141,6 @@ class PreprocessingData:
                 'age': item['age'],
                 'text': item['text'],
                 'accuracy': item['accuracy'],
-                'completeness': item['completeness'],
                 'fluency': item['fluency'],
                 'prosodic': item['prosodic'],
                 'total_score': item['total'],
@@ -259,7 +258,6 @@ class PreprocessingData:
             X.append(feature_vector)
             scores = [
                 item['accuracy'] / 10.0,
-                item['completeness'] / 10.0,
                 item['fluency'] / 10.0,
                 item['prosodic'] / 10.0
             ]
@@ -361,7 +359,7 @@ class PreprocessingData:
         
         # 2 chuan hoa diem so
         print("2. Chuan hoa diem so")
-        score_columns = ['accuracy', 'completeness', 'fluency', 'prosodic', 'total_score']
+        score_columns = ['accuracy', 'fluency', 'prosodic', 'total_score']
         sentence_df = self.normalize_scores(sentence_df, score_columns)
         word_score_columns = ['word_accuracy', 'word_stress', 'word_total']
         word_df = self.normalize_scores(word_df, word_score_columns)
@@ -380,7 +378,7 @@ class PreprocessingData:
         sentence_df = self.create_age_group(sentence_df)
         
         print("6. Phát hiện ngoại lệ...")
-        numeric_columns = ['accuracy', 'completeness', 'fluency', 'prosodic', 'total_score', 'age']
+        numeric_columns = ['accuracy','fluency', 'prosodic', 'total_score', 'age']
         outliers = self.detect_outliers(sentence_df, numeric_columns)
         
         # 7. Chia dữ liệu
@@ -627,7 +625,7 @@ def main(df):
         input_size=13,
         hidden_size=128,
         num_layers=2,
-        num_scores=4,
+        num_scores=3,
         max_length=800
     )
     
@@ -665,7 +663,10 @@ def predict_pronunciation_score(model, audio_bytes):
 
 if __name__ == "__main__":
     dataset = load_dataset('mispeech/speechocean762')
-
     train_df = dataset['train'].to_pandas()
-    X, y, score_columns = preprocess_data(train_df)
-    model, predictions, targets = main(train_df)
+    test_df = dataset['test'].to_pandas()
+    combined_df = pd.concat([train_df, test_df], ignore_index=True)
+    if 'completeness' in combined_df.columns:
+        combined_df = combined_df.drop('completeness', axis=1)
+    X, y, score_columns = preprocess_data(combined_df)
+    model, predictions, targets = main(combined_df)
