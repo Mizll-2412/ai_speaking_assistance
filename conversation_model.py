@@ -198,3 +198,45 @@ class ConversationTrainer:
         os.makedirs(save_path, exist_ok=True)
         self.model.save_pretrained(save_path)
         self.tokenizer.save_pretrained(save_path)
+    def generate_response(self, context, max_length=100, temperature=0.7, top_p=0.9):
+        self.model.eval()
+        input_text = f"{self.tokenizer.bos_token}{context}{self.tokenizer.sep_token}"
+        input_ids = self.tokenizer.encode(input_text, return_tensors='pt').to(self.device)
+        with torch.no_grad():
+            output = self.model.generate(
+                input_ids,
+                max_length=len(input_ids[0]) + max_length,
+                temperature=temperature,
+                top_p=top_p,
+                do_sample=True,
+                pad_token_id=self.tokenizer.pad_token_id,
+                eos_token_id=self.tokenizer.eos_token_id
+            )
+        generated_text = self.tokenizer.decode(output[0], skip_special_tokens=True)  
+                    # Extract response (after separator)
+        if self.tokenizer.sep_token in generated_text:
+            response = generated_text.split(self.tokenizer.sep_token)[-1].strip()
+        else:
+            response = generated_text
+        
+        return response
+
+def main():
+    trainer =ConversationTrainer(model_name='gpt2')
+    trainer.prepare_data(
+        train_file='conversation_data/train_data.json',
+        val_file='conversation_data/val_data.json',
+        max_length=512
+    )
+    trainer.train(
+        output_dir='./conversation_model',
+        epochs=3,
+        batch_size=4,
+        learning_rate=5e-5,
+        warmup_steps=100,
+        save_steps=500,
+        eval_steps=500,
+        use_wandb=False 
+    )
+if __name__ == "__main__":
+    main()
