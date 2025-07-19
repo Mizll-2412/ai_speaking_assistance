@@ -5,9 +5,9 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import(
     AutoTokenizer, AutoModelForCausalLM,
     GPT2LMHeadModel, GPT2Tokenizer,
-    AdamW, get_linear_schedule_with_warmup
+    get_linear_schedule_with_warmup
 )
-
+from torch.optim import AdamW
 import json
 import numpy as np
 from tqdm import tqdm
@@ -50,7 +50,7 @@ class ConversationDataset(Dataset):
         attention_mask = encoding['attention_mask'].squeeze()
         labels = input_ids.clone()
         sep_token_id = self.tokenizer.sep_token_id
-        sep_positions = (input_ids == sep_token_id).nonzeros(as_tuple=True)[0]
+        sep_positions = (input_ids == sep_token_id).nonzero(as_tuple=True)[0]
         if len(sep_positions)>0:
             sep_pos = sep_positions[0]
             labels[:sep_pos+1] = -100
@@ -213,7 +213,6 @@ class ConversationTrainer:
                 eos_token_id=self.tokenizer.eos_token_id
             )
         generated_text = self.tokenizer.decode(output[0], skip_special_tokens=True)  
-                    # Extract response (after separator)
         if self.tokenizer.sep_token in generated_text:
             response = generated_text.split(self.tokenizer.sep_token)[-1].strip()
         else:
