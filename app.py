@@ -9,6 +9,7 @@ import uuid
 import io
 from gtts import gTTS
 from playsound import playsound
+from train_scroing_model import training_model
 from pydub import AudioSegment
 from pydub.playback import play
 
@@ -143,7 +144,9 @@ def change_text_to_speech():
     except Exception as e:
         print(f"Error in text_to_speech: {e}")
         return jsonify({"error": f"TTS Error: {str(e)}"}), 500
-
+@app.route('/scoring', methods=['POST'])
+def scoring():
+    model = training_model
 @app.route('/start_recording', methods=['POST'])
 def start_recording():
     global is_recording, recording_thread, accumulated_audio_data
@@ -225,6 +228,7 @@ def get_status():
         "is_recording": is_recording,
         "chunks_recorded": chunks_count
     })
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
