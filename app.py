@@ -12,6 +12,7 @@ from playsound import playsound
 from train_scroing_model import training_model
 from pydub import AudioSegment
 from pydub.playback import play
+import torch
 
 app = Flask(__name__)
 
@@ -146,7 +147,15 @@ def change_text_to_speech():
         return jsonify({"error": f"TTS Error: {str(e)}"}), 500
 @app.route('/scoring', methods=['POST'])
 def scoring():
-    model = training_model
+    model = torch.load('D:\\AI_assistance\\best_pronunciation_model_with_word_numbers.pth')
+    try:
+        record = combine_audio_chunks()
+        word_count, accuracy = model.prediction(record)
+        return word_count, accuracy
+    except Exception as e:
+        print(f"Error: {e}")
+        
+        
 @app.route('/start_recording', methods=['POST'])
 def start_recording():
     global is_recording, recording_thread, accumulated_audio_data

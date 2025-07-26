@@ -389,6 +389,8 @@
             }
 
             initializeElements() {
+                this.wordnumber = document.getElementById('wordsSpoken')
+                this.accuracy = document.getElementById('accuracy')
                 this.conversationPlay = document.getElementById('conversationPlay');
                 this.recordBtn = document.getElementById('recordBtn');
                 this.stopBtn = document.getElementById('stopBtn');
@@ -537,6 +539,20 @@
                     }
                 } catch (error) {
                     console.error("Stop Error:", error);
+                }
+                try{
+                    const res = await fetch('/scoring',{
+                        method: 'POST'
+                    });
+                    if (result.status == "success"){
+                        this.wordnumber(result[0])
+                        this.accuracy(result[1])
+                    }
+                    else{
+                        alert("Error: "+result.message)
+                    }
+                } catch (error){
+                    console.error("Scoring Error: ",error);
                 }
             }
             updateUI() {
