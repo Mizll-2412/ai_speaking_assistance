@@ -193,7 +193,7 @@ class PersonaChatPreprocessor:
         except Exception as e:
             print(f"Error saving data: {e}")
     
-    def create_train_val_split(self, training_pairs, val_ratio=0.05, test_ratio=0.1):
+    def create_train_val_split(self, training_pairs, val_ratio=0.02, test_ratio=0.1):
         np.random.shuffle(training_pairs)
         total_size = len(training_pairs)
         val_size = int(total_size * val_ratio)
