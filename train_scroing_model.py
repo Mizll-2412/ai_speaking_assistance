@@ -502,6 +502,33 @@ class PronunciationScoringModel(nn.Module):
         out = self.dropout(out)
         out = self.fc3(out)
         return out
+    def prediction(self, audio_file_path):
+        
+        try:
+            processor = AudioProcessor()
+            features = processor.extract_features_from_file(audio_file_path)
+            
+            audio_data, sr = librosa.load(audio_file_path, sr=16000)
+            duration = len(audio_data) / sr
+            estimated_word_count = max(1, int(duration * 2))             
+            features_tensor = torch.FloatTensor(features).unsqueeze(0)
+            word_count_tensor = torch.FloatTensor([estimated_word_count])
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            self.to(device)
+            features_tensor = features_tensor.to(device)
+            word_count_tensor = word_count_tensor.to(device)
+            self.eval()
+            with torch.no_grad():
+                if self.use_word_count:
+                    scores = self(features_tensor, word_count_tensor)
+                else:
+                    scores = self(features_tensor)
+            accuracy = float(scores[0][0].cpu().numpy())            
+            accuracy = max(0, min(100, accuracy * 10))
+            return estimated_word_count, accuracy
+        except Exception as e:
+            print(f"Lỗi trong prediction: {e}")
+            return 1, 50.0
 
 
 # 4 Training model
