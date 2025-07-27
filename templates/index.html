@@ -424,7 +424,7 @@
                 }
             }
             async startConversation() {
-                this.recordBtn.style.display="block"
+                this.recordBtn.style.display = "block"
                 this.conversationPlay.style.display = "none"
                 if (this.isPlaying) {
                     console.log('Audio is already playing, ignoring click');
@@ -526,33 +526,46 @@
                 }
             }
             async stopRecording() {
-                this.stopBtn.style.display = 'none'
+                this.stopBtn.style.display = 'none';
+
                 try {
+                    // Dừng ghi âm trước
                     const response = await fetch('/stop_recording', {
                         method: 'POST'
                     });
                     const result = await response.json();
-                    if (result.status === "success") {
+
+                    if (result.status == "success") {
                         this.addUserMessage(result.text);
+
+                        // Chờ một chút để đảm bảo dữ liệu đã được xử lý
+                        setTimeout(async () => {
+                            try {
+                                // Sau đó mới gọi scoring
+                                const scoringResponse = await fetch('/scoring', {
+                                    method: 'POST'
+                                });
+                                const scoringResult = await scoringResponse.json();
+
+                                if (scoringResult.status == "success") {
+                                    this.wordnumber(scoringResult.word_count);
+                                    this.accuracy(scoringResult.accuracy);
+
+                                    // Xóa dữ liệu audio sau khi scoring xong
+                                    fetch('/clear_audio_data', { method: 'POST' });
+                                } else {
+                                    alert("Lỗi scoring: " + scoringResult.message);
+                                }
+                            } catch (error) {
+                                console.error("Lỗi Scoring: ", error);
+                            }
+                        }, 500); // Chờ 500ms
+
                     } else {
-                        alert("Error: " + result.message)
+                        alert("Lỗi dừng ghi âm: " + result.message);
                     }
                 } catch (error) {
-                    console.error("Stop Error:", error);
-                }
-                try{
-                    const res = await fetch('/scoring',{
-                        method: 'POST'
-                    });
-                    if (result.status == "success"){
-                        this.wordnumber(result[0])
-                        this.accuracy(result[1])
-                    }
-                    else{
-                        alert("Error: "+result.message)
-                    }
-                } catch (error){
-                    console.error("Scoring Error: ",error);
+                    console.error("Lỗi dừng: ", error);
                 }
             }
             updateUI() {

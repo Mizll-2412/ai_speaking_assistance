@@ -9,7 +9,7 @@ import uuid
 import io
 from gtts import gTTS
 from playsound import playsound
-from train_scroing_model import training_model
+from train_scroing_model import PronunciationScoringModel
 from pydub import AudioSegment
 from pydub.playback import play
 import torch
@@ -20,6 +20,28 @@ app = Flask(__name__)
 r = sr.Recognizer()
 model = whisper.load_model("base")
 os.environ["PATH"] += os.pathsep + "C:\\Users\\Admin\\Downloads\\ffmpeg-7.1.1-essentials_build\\ffmpeg-7.1.1-essentials_build\\bin"
+try:
+    scoring_model = PronunciationScoringModel(
+        input_size=13,
+        hidden_size=128,
+        num_layers=2,
+        num_scores=3,
+        max_length=800,
+        use_word_count=True
+    )
+    model_weights = torch.load(
+        'D:\\AI_assistance\\best_pronunciation_model_with_word_numbers.pth',
+        map_location='cpu'
+    )
+    
+    scoring_model.load_state_dict(model_weights)
+    scoring_model.eval()
+    
+    print("Đã load model thành công!")
+    
+except Exception as e:
+    print(f"Lỗi khi load model: {e}")
+    scoring_model = None
 
 # Biến global để quản lý trạng thái
 is_recording = False
@@ -147,13 +169,39 @@ def change_text_to_speech():
         return jsonify({"error": f"TTS Error: {str(e)}"}), 500
 @app.route('/scoring', methods=['POST'])
 def scoring():
-    model = torch.load('D:\\AI_assistance\\best_pronunciation_model_with_word_numbers.pth')
+    global accumulated_audio_data
+    if scoring_model is None:
+        return jsonify({
+            'status': 'error',
+            'message': 'Model chưa được load thành công'
+        }), 500
     try:
-        record = combine_audio_chunks()
-        word_count, accuracy = model.prediction(record)
-        return word_count, accuracy
+        with lock:
+            if not accumulated_audio_data:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'No audio data available for scoring'
+                }), 400
+            record = combine_audio_chunks(accumulated_audio_data)
+        if not record:
+            return jsonify({
+                'status': 'error',
+                'message': 'Failed to combine audio chunks'
+            }), 500
+        
+        word_count, accuracy = scoring_model.prediction(record)
+        print(f"Result: Word count = {word_count}, Accuracy = {accuracy}")
+        return jsonify({
+            'status': 'success',
+            'word_count': word_count,
+            'accuracy': accuracy
+        })
     except Exception as e:
         print(f"Error: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
         
         
 @app.route('/start_recording', methods=['POST'])
@@ -166,7 +214,6 @@ def start_recording():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.daemon = True
         recording_thread.start()
-        combine_audio_chunks()
 
         print("Bắt đầu ghi âm liên tục...")
         return jsonify({
@@ -211,9 +258,7 @@ def stop_recording():
                 "message":"Khong nhan dien duoc giong noi",
                 "chunks_count": len(accumulated_audio_data)
             })
-        if save_text(text):
-            accumulated_audio_data = []
-            
+        if save_text(text):            
             return jsonify({
                 "status": "success", 
                 "message": "Dừng ghi âm và lưu thành công",
@@ -229,6 +274,22 @@ def stop_recording():
                 "text": text,
                 "chunks_count": len(accumulated_audio_data)
             })
+        
+@app.route('/clear_audio_data', methods=['POST'])
+def clear_audio_data():
+    global accumulated_audio_data
+    try:
+        with lock:
+            accumulated_audio_data = []
+        return jsonify({
+            'status': 'success',
+            'message': 'Đã xóa dữ liệu audio'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 @app.route('/get_status')
 def get_status():
     with lock:
