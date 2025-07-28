@@ -389,8 +389,8 @@
             }
 
             initializeElements() {
-                this.wordnumber = document.getElementById('wordsSpoken')
-                this.accuracy = document.getElementById('accuracy')
+                this.wordsSpokenElement = document.getElementById('wordsSpoken');
+                this.accuracyElement = document.getElementById('accuracy');
                 this.conversationPlay = document.getElementById('conversationPlay');
                 this.recordBtn = document.getElementById('recordBtn');
                 this.stopBtn = document.getElementById('stopBtn');
@@ -525,6 +525,19 @@
                     this.showMessage('Failed to start recording. Please try again.', 'error');
                 }
             }
+            updateWordCount(count) {
+                if (this.wordsSpokenElement) {
+                    this.wordsSpokenElement.textContent = count;
+                    console.log(`Updated word count to: ${count}`);
+                }
+            }
+            updateAccuracy(accuracy) {
+                if (this.accuracyElement) {
+                    const roundedAccuracy = Math.round(accuracy);
+                    this.accuracyElement.textContent = `${roundedAccuracy}%`;
+                    console.log(`Updated accuracy to: ${roundedAccuracy}%`);
+                }
+            }
             async stopRecording() {
                 this.stopBtn.style.display = 'none';
 
@@ -548,16 +561,18 @@
                                 const scoringResult = await scoringResponse.json();
 
                                 if (scoringResult.status == "success") {
-                                    this.wordnumber(scoringResult.word_count);
-                                    this.accuracy(scoringResult.accuracy);
+                                    this.updateWordCount(scoringResult.word_count);
+                                    this.updateAccuracy(scoringResult.accuracy);
 
-                                    // Xóa dữ liệu audio sau khi scoring xong
+                                    this.showMessage(`Scoring completed: ${scoringResult.word_count} words, ${Math.round(scoringResult.accuracy)}% accuracy`, 'success');
+
                                     fetch('/clear_audio_data', { method: 'POST' });
                                 } else {
                                     alert("Lỗi scoring: " + scoringResult.message);
                                 }
                             } catch (error) {
                                 console.error("Lỗi Scoring: ", error);
+                                this.showMessage("Lỗi khi chấm điểm: " + error.message, 'error');
                             }
                         }, 500); // Chờ 500ms
 
@@ -566,8 +581,10 @@
                     }
                 } catch (error) {
                     console.error("Lỗi dừng: ", error);
+                    this.showMessage("Lỗi khi dừng ghi âm: " + error.message, 'error');
                 }
             }
+
             updateUI() {
                 if (this.isRecording) {
                     this.recordBtn.disabled = true;
