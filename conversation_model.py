@@ -3,17 +3,19 @@ import torch
 import torch.nn as nn
 from transformers import T5ForConditionalGeneration, T5Config
 from transformers import AutoTokenizer
+import warnings
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 class ConversationModel(nn.Module):
     def __init__(self, model_name="t5-small"):
         super(ConversationModel, self).__init__()
         self.model_name = model_name
         self.model = T5ForConditionalGeneration.from_pretrained(model_name)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)  
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            
+    
     def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.model(
             input_ids=input_ids,
@@ -24,15 +26,18 @@ class ConversationModel(nn.Module):
     
     def generate_response(self, input_text, max_length=50, num_beams=4, temperature=0.7):
         self.model.eval()
+        formatted_input = f"answer: {input_text}"
         
         inputs = self.tokenizer(
-            input_text,
+            formatted_input,
             return_tensors='pt',
             truncation=True,
             padding=True,
             max_length=128
         )
-        
+        device = next(self.model.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+
         with torch.no_grad():
             outputs = self.model.generate(
                 input_ids=inputs['input_ids'],
@@ -72,4 +77,5 @@ class ModelConfig:
 
 if __name__ == "__main__":
     model = ConversationModel()
-    
+    response = model.generate_response("How are you?")
+    print(f"Response: {response}")
