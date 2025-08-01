@@ -61,7 +61,12 @@ class ConversationModel(nn.Module):
     def load_model(self, load_path):
         self.model = T5ForConditionalGeneration.from_pretrained(load_path)
         self.tokenizer = AutoTokenizer.from_pretrained(load_path)
+        if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+
         print(f"Model loaded from {load_path}")
+        return self
+
 
 class ModelConfig:
     def __init__(self):
