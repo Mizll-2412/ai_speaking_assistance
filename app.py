@@ -13,6 +13,7 @@ from train_scroing_model import PronunciationScoringModel
 from pydub import AudioSegment
 from pydub.playback import play
 import torch
+from conversation_model import ConversationModel
 
 app = Flask(__name__)
 
@@ -43,7 +44,6 @@ except Exception as e:
     print(f"Lỗi khi load model: {e}")
     scoring_model = None
 
-# Biến global để quản lý trạng thái
 is_recording = False
 accumulated_audio_data = []
 recording_thread = None
@@ -223,6 +223,16 @@ def start_recording():
         })    
     else:
         return jsonify({"status": "error", "message": "Đang ghi âm rồi"})
+
+@app.route('/generate_coversation', methods=['POST'])
+def generate_conversation():
+    conversation= ConversationModel
+    conversation_model = conversation.load_model('D:\AI_assistance\trained_conversation_model\model.safetensors')
+    result = conversation_model.generate_response()
+    return jsonify({
+            'status': 'success',
+            'text': result,
+        })
 
 @app.route('/stop_recording', methods=['POST'])
 def stop_recording():
