@@ -583,13 +583,13 @@
                     console.error("Lỗi dừng: ", error);
                     this.showMessage("Lỗi khi dừng ghi âm: " + error.message, 'error');
                 }
-                const generateRespone = await fetch('generate_coversation', {
+                const generateRespone = await fetch('/generate_coversation', {
                             method: 'POST'
                 });
                 const generateResult = await generateRespone.json();
                 if (generateResult.status == "success")
                 {
-                    this.addAIMessage(generateResult.result)
+                    this.addAIMessage(generateResult.result);
                 }
             }
 

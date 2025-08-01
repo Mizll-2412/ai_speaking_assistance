@@ -226,9 +226,18 @@ def start_recording():
 
 @app.route('/generate_coversation', methods=['POST'])
 def generate_conversation():
-    conversation= ConversationModel
-    conversation_model = conversation.load_model('D:\AI_assistance\trained_conversation_model\model.safetensors')
-    result = conversation_model.generate_response()
+    global last_user_text
+    if not last_user_text:
+        return jsonify({'status': 'error', 'message': 'No input text'})
+    
+    conversation_model = ConversationModel()
+    model_path = 'D:\\AI_assistance\\trained_conversation_model'
+    conversation_model.load_model(model_path)
+    result = conversation_model.generate_response(
+            input_text=last_user_text,
+            max_length=100,
+            temperature=0.8
+        )    
     return jsonify({
             'status': 'success',
             'text': result,
@@ -236,7 +245,7 @@ def generate_conversation():
 
 @app.route('/stop_recording', methods=['POST'])
 def stop_recording():
-    global is_recording, accumulated_audio_data, recording_thread
+    global is_recording, accumulated_audio_data, recording_thread,last_user_text
     if not is_recording:
         return jsonify({
             "status": "error", 
@@ -262,11 +271,19 @@ def stop_recording():
                 "message": "Khong the ket hop audio"
             })
         text = transcribe_audio(combined_audio_file)
+        
         if not text:
             return jsonify({
                 "status": "error",
                 "message":"Khong nhan dien duoc giong noi",
                 "chunks_count": len(accumulated_audio_data)
+            })
+        if text:
+            recognized_text = text
+            last_user_text = recognized_text
+            return jsonify({
+                'status': 'success',
+                'text': recognized_text
             })
         if save_text(text):            
             return jsonify({
