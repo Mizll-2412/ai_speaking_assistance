@@ -550,7 +550,7 @@
 
                     if (result.status == "success") {
                         this.addUserMessage(result.text);
-
+                        
                         // Chờ một chút để đảm bảo dữ liệu đã được xử lý
                         setTimeout(async () => {
                             try {
@@ -589,7 +589,7 @@
                 const generateResult = await generateRespone.json();
                 if (generateResult.status == "success")
                 {
-                    this.addAIMessage(generateResult.result);
+                    this.addAIMessage(generateResult.text);
                 }
             }
 
