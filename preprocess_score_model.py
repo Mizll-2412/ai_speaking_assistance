@@ -66,7 +66,7 @@ def preprocess_data(df):
     print("Starting preprocess data")
 
     # Validate input data
-    required_columns = ['audio', 'accuracy', 'fluency', 'prosodic']
+    required_columns = ['audio', 'accuracy', 'fluency', 'prosodic', 'completeness']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {missing_columns}")
@@ -76,7 +76,6 @@ def preprocess_data(df):
 
     processor = AudioProcessor()
     features = []
-    word_counts = []
     valid_samples = 0
 
     for i, row in df.iterrows():
@@ -102,20 +101,9 @@ def preprocess_data(df):
                     feature = np.zeros((processor.max_length, processor.n_mfcc))
             else:
                 feature = np.zeros((processor.max_length, processor.n_mfcc))
-
-            # Extract word count from the 'words' column
-            if 'words' in row and row['words'] is not None:
-                word_count = len(row['words'])
-            elif 'text' in row and row['text'] is not None:
-                word_count = len(row['text'].split())
-            else:
-                word_count = 0
-
-            word_counts.append(word_count)
         except Exception as e:
             print(f"Error processing sample {i}: {e}")
             feature = np.zeros((processor.max_length, processor.n_mfcc))
-            word_counts.append(0)
 
 
         features.append(feature)
@@ -123,9 +111,8 @@ def preprocess_data(df):
     print(f"Successfully processed {valid_samples}/{len(df)} audio samples")
 
     X = np.array(features)
-    score_columns = ['accuracy', 'fluency', 'prosodic']
+    score_columns = ['accuracy', 'fluency', 'prosodic', 'completeness']
     y = df[score_columns].values.astype(np.float32)
-    word_counts = np.array(word_counts) # Convert word_counts to numpy array
 
     # Validate shapes
     if X.shape[0] != y.shape[0]:
@@ -133,14 +120,12 @@ def preprocess_data(df):
 
     print(f"X shape: {X.shape}")
     print(f"Y shape: {y.shape}")
-    print(f"Word counts shape: {word_counts.shape}")
-    print(f"Word count statistics: min={word_counts.min()}, max={word_counts.max()}, mean={word_counts.mean():.2f}")
     print(f"Score statistics:")
     for i, col in enumerate(score_columns):
         print(f"  {col}: min={y[:, i].min():.2f}, max={y[:, i].max():.2f}, mean={y[:, i].mean():.2f}")
 
 
-    return X, y, score_columns,word_counts
+    return X, y, score_columns
 
 class PreprocessingData:
     def __init__(self):

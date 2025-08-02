@@ -189,12 +189,15 @@ def scoring():
                 'message': 'Failed to combine audio chunks'
             }), 500
         
-        word_count, accuracy = scoring_model.prediction(record)
-        print(f"Result: Word count = {word_count}, Accuracy = {accuracy}")
+        scores = scoring_model.prediction(record)
         return jsonify({
             'status': 'success',
-            'word_count': word_count,
-            'accuracy': accuracy
+            'scores': {
+                'accuracy': round(scores['accuracy'], 2),
+                'fluency': round(scores['fluency'], 2),
+                'prosodic': round(scores['prosodic'], 2),
+                'completeness': round(scores['completeness'], 2)
+            }
         })
     except Exception as e:
         print(f"Error: {e}")
