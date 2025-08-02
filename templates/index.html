@@ -356,11 +356,11 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number" id="sessionsCount">0</div>
+                <div class="stat-number" id="completeness">0</div>
                 <div class="stat-label">Completeness</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="wordsSpoken">0</div>
+                <div class="stat-number" id="fluency">0</div>
                 <div class="stat-label">Fluency</div>
             </div>
             <div class="stat-card">
@@ -368,7 +368,7 @@
                 <div class="stat-label">Accuracy</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="streak">0</div>
+                <div class="stat-number" id="prosodic">0</div>
                 <div class="stat-label">Prosodic</div>
             </div>
         </div>
@@ -390,6 +390,9 @@
 
             initializeElements() {
                 this.wordsSpokenElement = document.getElementById('wordsSpoken');
+                this.completenessElement = document.getElementById('completeness');
+                this.fluencyElement = document.getElementById('fluency');
+                this.prosodicElement = document.getElementById('prosodic');
                 this.accuracyElement = document.getElementById('accuracy');
                 this.conversationPlay = document.getElementById('conversationPlay');
                 this.recordBtn = document.getElementById('recordBtn');
@@ -525,12 +528,12 @@
                     this.showMessage('Failed to start recording. Please try again.', 'error');
                 }
             }
-            updateWordCount(count) {
-                if (this.wordsSpokenElement) {
-                    this.wordsSpokenElement.textContent = count;
-                    console.log(`Updated word count to: ${count}`);
-                }
-            }
+            // updateWordCount(count) {
+            //     if (this.wordsSpokenElement) {
+            //         this.wordsSpokenElement.textContent = count;
+            //         console.log(`Updated word count to: ${count}`);
+            //     }
+            // }
             updateAccuracy(accuracy) {
                 if (this.accuracyElement) {
                     const roundedAccuracy = Math.round(accuracy);
@@ -538,6 +541,28 @@
                     console.log(`Updated accuracy to: ${roundedAccuracy}%`);
                 }
             }
+            updateFluency(fluency) {
+                if (this.fluencyElement) {
+                    const roundedAccuracy = Math.round(fluency);
+                    this.fluencyElement.textContent = `${roundedAccuracy}%`;
+                    console.log(`Updated fluency to: ${roundedAccuracy}%`);
+                }
+            }
+            updateCompleteness(completeness) {
+                if (this.completenessElement) {
+                    const roundedAccuracy = Math.round(completeness);
+                    this.completenessElement.textContent = `${roundedAccuracy}%`;
+                    console.log(`Updated Completeness to: ${roundedAccuracy}%`);
+                }
+            }
+            updateProsodic(prosodic) {
+                if (this.prosodicElement) {
+                    const roundedAccuracy = Math.round(prosodic);
+                    this.accuracyElement.textContent = `${roundedAccuracy}%`;
+                    console.log(`Updated Prosodic to: ${roundedAccuracy}%`);
+                }
+            }
+            
             async stopRecording() {
                 this.stopBtn.style.display = 'none';
 
