@@ -357,11 +357,11 @@
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-number" id="sessionsCount">0</div>
-                <div class="stat-label">Practice Sessions</div>
+                <div class="stat-label">Completeness</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="wordsSpoken">0</div>
-                <div class="stat-label">Words Spoken</div>
+                <div class="stat-label">Fluency</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="accuracy">0%</div>
@@ -369,7 +369,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="streak">0</div>
-                <div class="stat-label">Day Streak</div>
+                <div class="stat-label">Prosodic</div>
             </div>
         </div>
     </div>
@@ -562,6 +562,8 @@
 
                                 if (scoringResult.status == "success") {
                                     this.updateWordCount(scoringResult.word_count);
+                                    // this.updateWordCount(length(result.text))
+                                    console.log("text length: "+result.text.length)
                                     this.updateAccuracy(scoringResult.accuracy);
 
                                     this.showMessage(`Scoring completed: ${scoringResult.word_count} words, ${Math.round(scoringResult.accuracy)}% accuracy`, 'success');
