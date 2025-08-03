@@ -355,12 +355,12 @@
         </div>
 
         <div class="stats">
-            <div class="stat-card">
+            <!-- <div class="stat-card">
                 <div class="stat-number" id="completeness">0</div>
                 <div class="stat-label">Completeness</div>
-            </div>
+            </div> -->
             <div class="stat-card">
-                <div class="stat-number" id="fluency">0</div>
+                <div class="stat-number" id="fluency">0%</div>
                 <div class="stat-label">Fluency</div>
             </div>
             <div class="stat-card">
@@ -368,7 +368,7 @@
                 <div class="stat-label">Accuracy</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="prosodic">0</div>
+                <div class="stat-number" id="prosodic">0%</div>
                 <div class="stat-label">Prosodic</div>
             </div>
         </div>
@@ -389,8 +389,7 @@
             }
 
             initializeElements() {
-                this.wordsSpokenElement = document.getElementById('wordsSpoken');
-                this.completenessElement = document.getElementById('completeness');
+                // this.completenessElement = document.getElementById('completeness');
                 this.fluencyElement = document.getElementById('fluency');
                 this.prosodicElement = document.getElementById('prosodic');
                 this.accuracyElement = document.getElementById('accuracy');
@@ -548,13 +547,13 @@
                     console.log(`Updated fluency to: ${roundedAccuracy}%`);
                 }
             }
-            updateCompleteness(completeness) {
-                if (this.completenessElement) {
-                    const roundedAccuracy = Math.round(completeness);
-                    this.completenessElement.textContent = `${roundedAccuracy}%`;
-                    console.log(`Updated Completeness to: ${roundedAccuracy}%`);
-                }
-            }
+            // updateCompleteness(completeness) {
+            //     if (this.completenessElement) {
+            //         const roundedAccuracy = Math.round(completeness);
+            //         this.completenessElement.textContent = `${roundedAccuracy}%`;
+            //         console.log(`Updated Completeness to: ${roundedAccuracy}%`);
+            //     }
+            // }
             updateProsodic(prosodic) {
                 if (this.prosodicElement) {
                     const roundedAccuracy = Math.round(prosodic);
@@ -576,20 +575,20 @@
                     if (result.status == "success") {
                         this.addUserMessage(result.text);
                         
-                        // Chờ một chút để đảm bảo dữ liệu đã được xử lý
                         setTimeout(async () => {
                             try {
-                                // Sau đó mới gọi scoring
                                 const scoringResponse = await fetch('/scoring', {
                                     method: 'POST'
                                 });
                                 const scoringResult = await scoringResponse.json();
 
                                 if (scoringResult.status == "success") {
-                                    this.updateWordCount(scoringResult.word_count);
+                                    // this.updateWordCount(scoringResult.word_count);
                                     // this.updateWordCount(length(result.text))
-                                    console.log("text length: "+result.text.length)
+                                    // console.log("text length: "+result.text.length)
                                     this.updateAccuracy(scoringResult.accuracy);
+                                    this.updateFluency(scoringResult.fluency);
+                                    this.updateProsodic(scoringResult.prosodic);
 
                                     this.showMessage(`Scoring completed: ${scoringResult.word_count} words, ${Math.round(scoringResult.accuracy)}% accuracy`, 'success');
 
@@ -601,7 +600,7 @@
                                 console.error("Lỗi Scoring: ", error);
                                 this.showMessage("Lỗi khi chấm điểm: " + error.message, 'error');
                             }
-                        }, 500); // Chờ 500ms
+                        }, 100);
 
                     } else {
                         alert("Lỗi dừng ghi âm: " + result.message);

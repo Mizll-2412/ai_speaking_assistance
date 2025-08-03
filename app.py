@@ -26,12 +26,11 @@ try:
         input_size=13,
         hidden_size=128,
         num_layers=2,
-        num_scores=3,
+        num_scores=4,
         max_length=800,
-        use_word_count=True
     )
     model_weights = torch.load(
-        'D:\\AI_assistance\\best_pronunciation_model_with_word_numbers.pth',
+        'D:\\AI_assistance\\best_pronunciation_model.pth',
         map_location='cpu'
     )
     
