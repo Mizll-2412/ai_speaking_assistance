@@ -542,9 +542,9 @@
             }
             updateFluency(fluency) {
                 if (this.fluencyElement) {
-                    const roundedAccuracy = Math.round(fluency);
-                    this.fluencyElement.textContent = `${roundedAccuracy}%`;
-                    console.log(`Updated fluency to: ${roundedAccuracy}%`);
+                    const roundedFluency = Math.round(fluency);
+                    this.fluencyElement.textContent = `${roundedFluency}%`;
+                    console.log(`Updated fluency to: ${roundedFluency}%`);
                 }
             }
             // updateCompleteness(completeness) {
@@ -556,12 +556,11 @@
             // }
             updateProsodic(prosodic) {
                 if (this.prosodicElement) {
-                    const roundedAccuracy = Math.round(prosodic);
-                    this.accuracyElement.textContent = `${roundedAccuracy}%`;
-                    console.log(`Updated Prosodic to: ${roundedAccuracy}%`);
+                    const roundedProsodic = Math.round(prosodic);
+                    this.prosodicElement.textContent = `${roundedProsodic}%`;
+                    console.log(`Updated Prosodic to: ${roundedProsodic}%`);
                 }
             }
-            
             async stopRecording() {
                 this.stopBtn.style.display = 'none';
 
@@ -574,7 +573,7 @@
 
                     if (result.status == "success") {
                         this.addUserMessage(result.text);
-                        
+
                         setTimeout(async () => {
                             try {
                                 const scoringResponse = await fetch('/scoring', {
@@ -586,12 +585,10 @@
                                     // this.updateWordCount(scoringResult.word_count);
                                     // this.updateWordCount(length(result.text))
                                     // console.log("text length: "+result.text.length)
-                                    this.updateAccuracy(scoringResult.accuracy);
-                                    this.updateFluency(scoringResult.fluency);
-                                    this.updateProsodic(scoringResult.prosodic);
-
-                                    this.showMessage(`Scoring completed: ${scoringResult.word_count} words, ${Math.round(scoringResult.accuracy)}% accuracy`, 'success');
-
+                                    this.updateAccuracy(scoringResult.scores.accuracy);
+                                    this.updateFluency(scoringResult.scores.fluency);
+                                    this.updateProsodic(scoringResult.scores.prosodic);
+                                    console.log("Accuracy: " + scoringResult.accuracy, "Fluency: " + scoringResult.fluency, "Prosodic: " + scoringResult.prosodic)
                                     fetch('/clear_audio_data', { method: 'POST' });
                                 } else {
                                     alert("Lỗi scoring: " + scoringResult.message);
@@ -600,7 +597,7 @@
                                 console.error("Lỗi Scoring: ", error);
                                 this.showMessage("Lỗi khi chấm điểm: " + error.message, 'error');
                             }
-                        }, 100);
+                        }, 300);
 
                     } else {
                         alert("Lỗi dừng ghi âm: " + result.message);
@@ -610,12 +607,19 @@
                     this.showMessage("Lỗi khi dừng ghi âm: " + error.message, 'error');
                 }
                 const generateRespone = await fetch('/generate_coversation', {
-                            method: 'POST'
+                    method: 'POST'
                 });
                 const generateResult = await generateRespone.json();
-                if (generateResult.status == "success")
-                {
+                if (generateResult.status == "success") {
                     this.addAIMessage(generateResult.text);
+                    const response = await fetch("/text_to_speech", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ text: generateResult.text })
+                    });
+
                 }
             }
 
