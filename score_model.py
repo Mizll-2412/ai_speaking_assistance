@@ -1,6 +1,7 @@
 import librosa
 import torch
 import torch.nn as nn
+import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -88,7 +89,14 @@ class PronunciationScoringModel(nn.Module):
         try:
             processor = AudioProcessor()
             features = processor.extract_features_from_file(audio_file_path)
-            
+            if isinstance(features, np.ndarray):
+                features_tensor = torch.tensor(features, dtype=torch.float32)
+            else:
+                features_tensor = torch.tensor(features, dtype=torch.float32)
+            if features_tensor.dim() == 1:
+                features_tensor = features_tensor.unsqueeze(0)
+            elif features_tensor.dim() == 2:
+                features_tensor = features_tensor.unsqueeze(0)
             audio_data, sr = librosa.load(audio_file_path, sr=16000)
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             self.to(device)
