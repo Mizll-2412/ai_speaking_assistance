@@ -164,28 +164,21 @@ def plot_result(train_losses, val_losses, predictions, targets, score_columns):
 def main(df):
     X, y, score_columns = preprocess_data(df)
     
-    # Đảm bảo score_columns bao gồm đủ 4 scores
     expected_scores = ['accuracy', 'fluency', 'prosodic', 'completeness']
     score_columns = [col for col in expected_scores if col in df.columns]
     
     print(f"Training with scores: {score_columns}")
     
-    # Split data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
-
-
-    # Create datasets
     train_dataset = AudioScoringDataset(X_train, y_train)
     val_dataset = AudioScoringDataset(X_val, y_val)
     test_dataset = AudioScoringDataset(X_test, y_test)
 
-    # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
-    # Create model với số lượng scores chính xác
     model = PronunciationScoringModel(
         input_size=13,
         hidden_size=128,
@@ -199,13 +192,11 @@ def main(df):
     print(f"\nTotal parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"Output scores: {score_columns}\n")
 
-    # Training
     train_losses, val_losses = training_model(
         model, train_loader, val_loader,
         num_epochs=50, learning_rate=0.001, patience=10,
     )
 
-    # Load best model and evaluate
     model.load_state_dict(torch.load('best_pronunciation_model.pth'))
     predictions, targets,  = evaluate_model(
         model, test_loader, score_columns

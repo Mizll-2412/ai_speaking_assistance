@@ -565,7 +565,6 @@
                 this.stopBtn.style.display = 'none';
 
                 try {
-                    // Dừng ghi âm trước
                     const response = await fetch('/stop_recording', {
                         method: 'POST'
                     });
@@ -582,19 +581,16 @@
                                 const scoringResult = await scoringResponse.json();
 
                                 if (scoringResult.status == "success") {
-                                    // this.updateWordCount(scoringResult.word_count);
-                                    // this.updateWordCount(length(result.text))
-                                    // console.log("text length: "+result.text.length)
                                     this.updateAccuracy(scoringResult.scores.accuracy);
                                     this.updateFluency(scoringResult.scores.fluency);
                                     this.updateProsodic(scoringResult.scores.prosodic);
-                                    console.log("Accuracy: " + scoringResult.accuracy, "Fluency: " + scoringResult.fluency, "Prosodic: " + scoringResult.prosodic)
+                                    console.log("Điểm số:", scoringResult.scores);
                                     fetch('/clear_audio_data', { method: 'POST' });
                                 } else {
-                                    alert("Lỗi scoring: " + scoringResult.message);
+                                    alert("Lỗi chấm điểm: " + scoringResult.message);
                                 }
                             } catch (error) {
-                                console.error("Lỗi Scoring: ", error);
+                                console.error("Lỗi chấm điểm: ", error);
                                 this.showMessage("Lỗi khi chấm điểm: " + error.message, 'error');
                             }
                         }, 300);
@@ -606,20 +602,37 @@
                     console.error("Lỗi dừng: ", error);
                     this.showMessage("Lỗi khi dừng ghi âm: " + error.message, 'error');
                 }
-                const generateRespone = await fetch('/generate_coversation', {
-                    method: 'POST'
-                });
-                const generateResult = await generateRespone.json();
-                if (generateResult.status == "success") {
-                    this.addAIMessage(generateResult.text);
-                    const response = await fetch("/text_to_speech", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ text: generateResult.text })
+                try {
+                    const generateResponse = await fetch('/generate_coversation', {
+                        method: 'POST'
                     });
+                    const generateResult = await generateResponse.json();
 
+                    if (generateResult.status == "success") {
+                        this.addAIMessage(generateResult.text);
+
+                        const ttsResponse = await fetch("/text_to_speech", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ text: generateResult.text })
+                        });
+
+                        const ttsResult = await ttsResponse.json();
+
+                        if (ttsResult.status === "success") {
+                            const audio = new Audio(ttsResult.audio_url);
+                            audio.play().catch(error => {
+                                console.error("Lỗi phát audio:", error);
+                            });
+                        } else {
+                            console.error("Lỗi TTS:", ttsResult.error);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Lỗi tạo phản hồi:", error);
+                    this.showMessage("Lỗi khi tạo phản hồi AI: " + error.message, 'error');
                 }
             }
 

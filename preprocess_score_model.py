@@ -27,9 +27,7 @@ class AudioProcessor:
         try:
             audio_data, _ = librosa.load(io.BytesIO(audio_bytes), sr=self.sr)
 
-            # Basic audio augmentation
-            if np.random.random() < 0.3:  # 30% chance of augmentation
-                # Add slight noise
+            if np.random.random() < 0.3: 
                 noise = np.random.normal(0, 0.005, audio_data.shape)
                 audio_data = audio_data + noise
 
