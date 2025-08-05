@@ -13,6 +13,7 @@ from train_scroing_model import PronunciationScoringModel
 from pydub import AudioSegment
 from pydub.playback import play
 import torch
+import uuid
 from conversation_model import ConversationModel
 
 app = Flask(__name__)
@@ -138,34 +139,38 @@ def index():
     return render_template('index.html')
 
 @app.route('/text_to_speech', methods=['POST'])
-def change_text_to_speech():
+def text_to_speech():
     try:
-        text = request.json.get("text", "")
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Không có dữ liệu JSON"}), 400
+        text = data.get("text", "")
         if not text:
-            return jsonify({"error": "No text provided"}), 400            
-        
-        if not os.path.exists('static'):
-            os.makedirs('static')        
-        
-        import uuid
-        filename = f"static/output_{uuid.uuid4().hex[:8]}.mp3"
+            return jsonify({"error": "Không có text được cung cấp"}), 400                    
+        static_dir = 'static'
+        if not os.path.exists(static_dir):
+            os.makedirs(static_dir)        
+        filename = f"{static_dir}/output_{uuid.uuid4().hex[:8]}.mp3"        
         tts = gTTS(text, lang='en', slow=False) 
         tts.save(filename)
         
         if not os.path.exists(filename):
-            return jsonify({"error": "Failed to create audio file"}), 500
+            return jsonify({"error": "Không thể tạo file audio"}), 500
             
-        print(f"Audio file created: {filename}")        
+        print(f"File audio đã tạo: {filename}")        
         
         return jsonify({
             "status": "success", 
             "audio_url": f"/{filename}",
-            "message": "Audio created successfully"
+            "message": "Audio được tạo thành công"
         })
         
     except Exception as e:
-        print(f"Error in text_to_speech: {e}")
-        return jsonify({"error": f"TTS Error: {str(e)}"}), 500
+        print(f"Lỗi trong text_to_speech: {e}")
+        return jsonify({
+            "status": "error",
+            "error": f"Lỗi TTS: {str(e)}"
+        }), 500
 @app.route('/scoring', methods=['POST'])
 def scoring():
     global accumulated_audio_data
