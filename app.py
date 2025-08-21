@@ -43,7 +43,8 @@ try:
 except Exception as e:
     print(f"Lỗi khi load model: {e}")
     scoring_model = None
-
+conversation_model = ConversationModel(model_name="facebook/blenderbot-400M-distill")
+last_user_text = None 
 is_recording = False
 accumulated_audio_data = []
 recording_thread = None
@@ -231,25 +232,34 @@ def start_recording():
     else:
         return jsonify({"status": "error", "message": "Đang ghi âm rồi"})
 
-@app.route('/generate_coversation', methods=['POST'])
+@app.route('/generate_conversation', methods=['POST'])
 def generate_conversation():
     global last_user_text
-    if not last_user_text:
-        return jsonify({'status': 'error', 'message': 'No input text'})
-    
-    conversation_model = ConversationModel()
-    model_path = 'D:\\AI_assistance\\trained_conversation_model'
-    conversation_model.load_model(model_path)
-    result = conversation_model.generate_response(
-            input_text=last_user_text,
+    try:
+        data = request.get_json()
+        user_input = data.get("text") if data else last_user_text
+        if not user_input:
+            return jsonify({
+                'status': 'error',
+                'message': 'No input text provided'
+            }), 400
+        result = conversation_model.generate_response(
+            input_text=user_input,
             max_length=100,
             temperature=0.8
-        )    
-    return jsonify({
+        )
+        last_user_text = user_input
+        return jsonify({
             'status': 'success',
-            'text': result,
+            'user_text': user_input,
+            'bot_response': result
         })
-
+    except Exception as e:
+        print(f"Lỗi trong generate_conversation: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 @app.route('/stop_recording', methods=['POST'])
 def stop_recording():
     global is_recording, accumulated_audio_data, recording_thread,last_user_text
