@@ -16,7 +16,7 @@ if __name__ == "__main__":
     raw_data = load_dataset("imranali291/english-conversation")['train']
     print('start')
     tokenizer = AutoTokenizer.from_pretrained("t5-small")
-    epochs = 3
+    epochs = 1
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     train_dataset = EnglishConversationDataset(data= raw_data, tokenizer= tokenizer, max_length= 128, train= True)
