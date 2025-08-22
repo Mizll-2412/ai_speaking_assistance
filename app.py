@@ -262,63 +262,60 @@ def generate_conversation():
         }), 500
 @app.route('/stop_recording', methods=['POST'])
 def stop_recording():
-    global is_recording, accumulated_audio_data, recording_thread,last_user_text
+    global is_recording, accumulated_audio_data, recording_thread, last_user_text
+    
     if not is_recording:
         return jsonify({
             "status": "error", 
             "message": "Không có ghi âm nào đang chạy"
         })
-    print("Stopping record")
+    
+    print("Đang dừng ghi âm")
     is_recording = False
+    
     if recording_thread and recording_thread.is_alive():
         recording_thread.join(timeout=10)
         if recording_thread.is_alive():
-             print("Warning: Recording thread không thoát trong thời gian cho phép")
+            print("Cảnh báo: Recording thread không thoát trong thời gian cho phép")
+    
     with lock:
         if not accumulated_audio_data:
             return jsonify({
                 "status": "error",
-                "message": "Khong co du lieu nao duoc thu"
+                "message": "Không có dữ liệu nào được thu"
             })
-        print("Da thu duoc {} doan audio".format(len(accumulated_audio_data)))
+        
+        print("Đã thu được {} đoạn audio".format(len(accumulated_audio_data)))
         combined_audio_file = combine_audio_chunks(accumulated_audio_data)
+        
         if not combined_audio_file:
             return jsonify({
                 "status": "error",
-                "message": "Khong the ket hop audio"
+                "message": "Không thể kết hợp audio"
             })
+        
         text = transcribe_audio(combined_audio_file)
         
         if not text:
             return jsonify({
                 "status": "error",
-                "message":"Khong nhan dien duoc giong noi",
-                "chunks_count": len(accumulated_audio_data)
-            })
-        if text:
-            recognized_text = text
-            last_user_text = recognized_text
-            return jsonify({
-                'status': 'success',
-                'text': recognized_text
-            })
-        if save_text(text):            
-            return jsonify({
-                "status": "success", 
-                "message": "Dừng ghi âm và lưu thành công",
-                "text": text,
-                "chunks_count": len(accumulated_audio_data),
-                "audio_file": combined_audio_file,
-                "timestamp": datetime.now().isoformat()
-            })
-        else:
-            return jsonify({
-                "status": "partial_success", 
-                "message": "Transcribe thành công nhưng lưu file thất bại",
-                "text": text,
+                "message": "Không nhận diện được giọng nói",
                 "chunks_count": len(accumulated_audio_data)
             })
         
+        recognized_text = text.strip()
+        last_user_text = recognized_text
+        
+        save_text(recognized_text)
+        
+        return jsonify({
+            'status': 'success',
+            'text': recognized_text,
+            'chunks_count': len(accumulated_audio_data),
+            'audio_file': combined_audio_file,
+            'timestamp': datetime.now().isoformat()
+        })
+    
 @app.route('/clear_audio_data', methods=['POST'])
 def clear_audio_data():
     global accumulated_audio_data
