@@ -563,16 +563,17 @@
             }
             async stopRecording() {
                 this.stopBtn.style.display = 'none';
+                this.isRecording = false; 
+                let result; 
 
                 try {
                     const response = await fetch('/stop_recording', {
                         method: 'POST'
                     });
-                    const result = await response.json();
+                    result = await response.json();
 
                     if (result.status == "success") {
                         this.addUserMessage(result.text);
-
                         setTimeout(async () => {
                             try {
                                 const scoringResponse = await fetch('/scoring', {
@@ -587,52 +588,70 @@
                                     console.log("Điểm số:", scoringResult.scores);
                                     fetch('/clear_audio_data', { method: 'POST' });
                                 } else {
-                                    alert("Lỗi chấm điểm: " + scoringResult.message);
+                                    console.error("Lỗi chấm điểm:", scoringResult.message);
+                                    this.showMessage("Lỗi chấm điểm: " + scoringResult.message, 'error');
                                 }
                             } catch (error) {
-                                console.error("Lỗi chấm điểm: ", error);
+                                console.error("Lỗi chấm điểm:", error);
                                 this.showMessage("Lỗi khi chấm điểm: " + error.message, 'error');
                             }
                         }, 300);
 
                     } else {
-                        alert("Lỗi dừng ghi âm: " + result.message);
+                        console.error("Lỗi dừng ghi âm:", result.message);
+                        this.showMessage("Lỗi dừng ghi âm: " + result.message, 'error');
+                        return; 
                     }
                 } catch (error) {
-                    console.error("Lỗi dừng: ", error);
+                    console.error("Lỗi dừng:", error);
                     this.showMessage("Lỗi khi dừng ghi âm: " + error.message, 'error');
+                    return;
                 }
-                try {
-                    const generateResponse = await fetch('/generate_coversation', {
-                        method: 'POST'
-                    });
-                    const generateResult = await generateResponse.json();
 
-                    if (generateResult.status == "success") {
-                        this.addAIMessage(generateResult.text);
-
-                        const ttsResponse = await fetch("/text_to_speech", {
-                            method: "POST",
+                if (result && result.status == "success" && result.text) {
+                    try {
+                        const generateResponse = await fetch('/generate_conversation', {
+                            method: 'POST',
                             headers: {
                                 "Content-Type": "application/json"
                             },
-                            body: JSON.stringify({ text: generateResult.text })
+                            body: JSON.stringify({ text: result.text })
                         });
+                        const generateResult = await generateResponse.json();
 
-                        const ttsResult = await ttsResponse.json();
+                        if (generateResult.status == "success") {
+                            this.addAIMessage(generateResult.bot_response);
 
-                        if (ttsResult.status === "success") {
-                            const audio = new Audio(ttsResult.audio_url);
-                            audio.play().catch(error => {
-                                console.error("Lỗi phát audio:", error);
-                            });
+                            try {
+                                const ttsResponse = await fetch("/text_to_speech", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json"
+                                    },
+                                    body: JSON.stringify({ text: generateResult.bot_response })
+                                });
+
+                                const ttsResult = await ttsResponse.json();
+
+                                if (ttsResult.status === "success") {
+                                    const audio = new Audio(ttsResult.audio_url);
+                                    audio.play().catch(error => {
+                                        console.error("Lỗi phát audio:", error);
+                                    });
+                                } else {
+                                    console.error("Lỗi TTS:", ttsResult.error);
+                                }
+                            } catch (ttsError) {
+                                console.error("Lỗi TTS request:", ttsError);
+                            }
                         } else {
-                            console.error("Lỗi TTS:", ttsResult.error);
+                            console.error("Lỗi generate conversation:", generateResult.message);
+                            this.showMessage("Lỗi tạo phản hồi: " + generateResult.message, 'error');
                         }
+                    } catch (error) {
+                        console.error("Lỗi tạo phản hồi:", error);
+                        this.showMessage("Lỗi khi tạo phản hồi AI: " + error.message, 'error');
                     }
-                } catch (error) {
-                    console.error("Lỗi tạo phản hồi:", error);
-                    this.showMessage("Lỗi khi tạo phản hồi AI: " + error.message, 'error');
                 }
             }
 
